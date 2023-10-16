@@ -5,6 +5,8 @@ function App() {
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [userData, setUserData] = useState({ name: "", age: "", health_data: "" });
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     fetchUsers();
@@ -12,10 +14,14 @@ function App() {
 
   const fetchUsers = async () => {
     try {
+      setLoading(true);
       const response = await axios.get("http://localhost:5000/user");
       setUsers(response.data);
     } catch (error) {
+      setError("Error fetching users");
       console.error("Error fetching users", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -24,6 +30,7 @@ function App() {
       await axios.post("http://localhost:5000/user", userData);
       fetchUsers();
     } catch (error) {
+      setError("Error creating user");
       console.error("Error creating user", error);
     }
   };
@@ -33,6 +40,7 @@ function App() {
       await axios.put(`http://localhost:5000/user/${id}`, userData);
       fetchUsers();
     } catch (error) {
+      setError("Error updating user");
       console.error("Error updating user", error);
     }
   };
@@ -42,6 +50,7 @@ function App() {
       await axios.delete(`http://localhost:5000/user/${id}`);
       fetchUsers();
     } catch (error) {
+      setError("Error deleting user");
       console.error("Error deleting user", error);
     }
   };
@@ -49,17 +58,22 @@ function App() {
   return (
     <div className="App">
       <h1>ProHealth Insights</h1>
-      <div>
-        {users.map((user) => (
-          <div key={user.id}>
-            <h2>{user.name}</h2>
-            <p>Age: {user.age}</p>
-            <p>Health Data: {user.health_data}</p>
-            <button onClick={() => setSelectedUser(user)}>Edit</button>
-            <button onClick={() => deleteUser(user.id)}>Delete</button>
-          </div>
-        ))}
-      </div>
+      {error && <p className="error">{error}</p>}
+      {loading ? (
+        <p>Loading...</p>
+      ) : (
+        <div>
+          {users.map((user) => (
+            <div key={user.id}>
+              <h2>{user.name}</h2>
+              <p>Age: {user.age}</p>
+              <p>Health Data: {user.health_data}</p>
+              <button onClick={() => setSelectedUser(user)}>Edit</button>
+              <button onClick={() => deleteUser(user.id)}>Delete</button>
+            </div>
+          ))}
+        </div>
+      )}
       <div>
         <h2>{selectedUser ? "Edit User" : "Add User"}</h2>
         <label>Name:</label>
