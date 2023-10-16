@@ -1,0 +1,59 @@
+from flask import Flask, request, jsonify
+from flask_sqlalchemy import SQLAlchemy
+
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
+
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), nullable=False)
+    age = db.Column(db.Integer)
+    health_data = db.Column(db.String(500))
+
+@app.route('/user', methods=['POST'])
+def create_user():
+    data = request.get_json()
+
+    new_user = User(
+        name=data['name'], 
+        age=data['age'], 
+        health_data=data['health_data']
+    )
+    db.session.add(new_user)
+    db.session.commit()
+    
+    return jsonify({'message': 'User created'}), 201
+
+@app.route('/user/<user_id>', methods=['GET'])
+def get_user(user_id):
+    user = User.query.get_or_404(user_id)
+    return jsonify({
+        'name': user.name,
+        'age': user.age,
+        'health_data': user.health_data
+    })
+
+@app.route('/user/<user_id>', methods=['PUT'])
+def update_user(user_id):
+    data = request.get_json()
+    user = User.query.get_or_404(user_id)
+    
+    user.name = data['name']
+    user.age = data['age']
+    user.health_data = data['health_data']
+    
+    db.session.commit()
+    return jsonify({'message': 'User updated'}), 200
+
+@app.route('/user/<user_id>', methods=['DELETE'])
+def delete_user(user_id):
+    user = User.query.get_or_404(user_id)
+    db.session.delete(user)
+    db.session.commit()
+    
+    return jsonify({'message': 'User deleted'}), 200
+
+if __name__ == "__main__":
+    app.run(debug=True)
